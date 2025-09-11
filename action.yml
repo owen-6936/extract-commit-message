@@ -9,39 +9,52 @@ branding:
 outputs:
   head_message:
     description: "First line of the commit message (used as PR title)"
-    value: ${{ steps.parse.outputs.head_message }}
+    value: ${{ steps.parse-commit-message.outputs.head_message }}
   body_message:
     description: "Remaining lines of the commit message (used as PR body)"
-    value: ${{ steps.parse.outputs.body_message }}
+    value: ${{ steps.parse-commit-message.outputs.body_message }}
   is_multiline:
     description: "True if the commit message spans multiple lines"
-    value: ${{ steps.parse.outputs.is_multiline }}
+    value: ${{ steps.parse-commit-message.outputs.is_multiline }}
+  has_commit:
+    description: "true if a commit message was detected; false otherwise"
+    value: ${{ steps.parse-commit-message.outputs.has_commit }}
 
 runs:
   using: "composite"
   steps:
-    - name: Parse Commit Message
-      id: parse
+    - name: Extract head and body of commit message
+      id: parse-commit-message
       shell: bash
       run: |
         full_message="${{ github.event.head_commit.message }}"
 
+        if [ -z "$full_message" ]; then
+        echo "⚠️ No commit message found. Using fallback values."
+        echo "has_commit=false" >> "$GITHUB_OUTPUT"
+        echo "head_message=Automated PR" >> "$GITHUB_OUTPUT"
+        echo "body_message=This pull request was created without a detected commit message." >> "$GITHUB_OUTPUT"
+        echo "is_multiline=false" >> "$GITHUB_OUTPUT"
+        exit 0
+        fi
+
         if [ "$(printf "%s" "$full_message" | wc -l)" -gt 1 ]; then
-          head_message=$(printf "%s" "$full_message" | head -n 1)
-          body_message=$(printf "%s" "$full_message" | tail -n +2)
+        head_message=$(printf "%s" "$full_message" | head -n 1)
+        body_message=$(printf "%s" "$full_message" | tail -n +2)
 
-          echo "head_message=$head_message" >> "$GITHUB_OUTPUT"
-          {
-          echo "body_message<<EOF"
-          echo "$body_message"
-          echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-          echo "is_multiline=true" >> "$GITHUB_OUTPUT"
+        echo "head_message=$head_message" >> "$GITHUB_OUTPUT"
+        {
+        echo "body_message<<EOF"
+        echo "$body_message"
+        echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+        echo "is_multiline=true" >> "$GITHUB_OUTPUT"
         else
-          head_message="$full_message"
-          body_message="This pull request was automatically created by a workflow."
+        head_message="$full_message"
+        body_message="This pull request was automatically created by a workflow."
 
-          echo "head_message=$head_message" >> "$GITHUB_OUTPUT"
-          echo "body_message=$body_message" >> "$GITHUB_OUTPUT"
-          echo "is_multiline=false" >> "$GITHUB_OUTPUT"
+        echo "head_message=$head_message" >> "$GITHUB_OUTPUT"
+        echo "body_message=$body_message" >> "$GITHUB_OUTPUT"
+        echo "has_commit=true" >> "$GITHUB_OUTPUT"
+        echo "is_multiline=false" >> "$GITHUB_OUTPUT"
         fi
