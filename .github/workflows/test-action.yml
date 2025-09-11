@@ -1,8 +1,8 @@
 name: Test Extract Commit Message
 
 on:
-  pull_request:
-    branches:
+  push:
+    branches-ignore:
       - main
 
 jobs:
