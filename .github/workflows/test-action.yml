@@ -1,0 +1,29 @@
+name: Test Extract Commit Message
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+
+jobs:
+  parse-commit-message:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Extract Commit Message
+        id: extract-commit
+        uses: ./
+
+      - name: Create PR
+        uses: owen-6936/create-pr@v1.1.0
+        with:
+          branch: ${{ github.ref_name }}
+          base-branch: "main"
+          title: ${{ steps.extract-commit.outputs.head_message }}
+          body: ${{ steps.extract-commit.outputs.body_message }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels: "automated,test"
+          comment-body: "This PR is created to test the extract commit message action"
