@@ -69,6 +69,7 @@ jobs:
 | `head_message` | First line of the commit message                      |
 | `body_message` | Remaining lines of the commit message (or fallback)   |
 | `is_multiline` | `true` if the message spans multiple lines            |
+| `has_commit`   | `true` if a commit message was detected; false otherwise|
 
 ---
 
@@ -102,6 +103,7 @@ The outputs will be:
 head_message: feat: add user onboarding flow
 body_message: Includes QR preview, SVG accents, and reviewer guide scaffolding.
 is_multiline: true
+has_commit: true
 ```
 
 ---
