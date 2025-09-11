@@ -1,0 +1,47 @@
+name: Extract Commit Message
+description: "Parses the latest commit message into head and body for automated PR workflows."
+author: "owen-6936"
+
+branding:
+  icon: "message-square"
+  color: "gray-dark"
+
+outputs:
+  head_message:
+    description: "First line of the commit message (used as PR title)"
+    value: ${{ steps.parse.outputs.head_message }}
+  body_message:
+    description: "Remaining lines of the commit message (used as PR body)"
+    value: ${{ steps.parse.outputs.body_message }}
+  is_multiline:
+    description: "True if the commit message spans multiple lines"
+    value: ${{ steps.parse.outputs.is_multiline }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Parse Commit Message
+      id: parse
+      shell: bash
+      run: |
+        full_message="${{ github.event.head_commit.message }}"
+
+        if [ "$(printf "%s" "$full_message" | wc -l)" -gt 1 ]; then
+          head_message=$(printf "%s" "$full_message" | head -n 1)
+          body_message=$(printf "%s" "$full_message" | tail -n +2)
+
+          echo "head_message=$head_message" >> "$GITHUB_OUTPUT"
+          {
+          echo "body_message<<EOF"
+          echo "$body_message"
+          echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "is_multiline=true" >> "$GITHUB_OUTPUT"
+        else
+          head_message="$full_message"
+          body_message="This pull request was automatically created by a workflow."
+
+          echo "head_message=$head_message" >> "$GITHUB_OUTPUT"
+          echo "body_message=$body_message" >> "$GITHUB_OUTPUT"
+          echo "is_multiline=false" >> "$GITHUB_OUTPUT"
+        fi
