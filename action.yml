@@ -26,8 +26,10 @@ runs:
     - name: Extract head and body of commit message
       id: parse-commit-message
       shell: bash
+      env:
+        COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
       run: |
-        full_message="${{ github.event.head_commit.message }}"
+        full_message="$COMMIT_MESSAGE"
 
         if [ -z "$full_message" ]; then
         echo "⚠️ No commit message found. Using fallback values."
